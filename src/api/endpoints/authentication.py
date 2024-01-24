@@ -8,13 +8,13 @@ def get_security_service():
     return security_service
 
 
-@router.post("/sign-in", response_model=SignInResponse)
+@router.post("/signIn", response_model=SignInResponse)
 async def sign_in(user_info: UserLogin, security_service: SecurityService = Depends(get_security_service)):
     response = await security_service.sign_in(user_info)
     return response
 
 
-@router.post("/sign-up", response_model=SignInResponse)
+@router.post("/signUp", response_model=SignInResponse)
 async def sign_up(user_info: UserCreate, security_service: SecurityService = Depends(get_security_service)) -> SignInResponse:
     response = await security_service.sign_up(user_info)
     return response

@@ -9,7 +9,7 @@ def get_user_service():
     return user_service
 
 
-@router.get("/check-balance")
+@router.get("/balance")
 async def get_balance(
     user_service: UserService = Depends(get_user_service),
     current_user: User = Depends(security.get_current_user_from_header)

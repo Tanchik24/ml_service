@@ -10,7 +10,7 @@ def get_user_service():
     return user_service
 
 
-@router.get("/add_model")
+@router.post("/model")
 async def get_balance(
     modelname: str, file_path: str, cost: int,
     user_service: UserService = Depends(get_user_service),

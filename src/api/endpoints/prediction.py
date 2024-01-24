@@ -12,23 +12,24 @@ router = APIRouter(prefix="/predict", tags=["predict"])
 def get_user_service():
     return user_service
 
+
 def get_prediction_service():
     return prediction_service
 
+
 background_tasks = BackgroundTasks()
 
-@router.post("/job_id")
+
+@router.post("/")
 async def create_prediction_from_file(model: str,
                                       prediction_service: PredictionService = Depends(get_prediction_service),
                                       file: UploadFile = File(...),
                                       user: User = Depends(security.get_current_user_from_header)) -> str:
-
     return await prediction_service.predict(background_tasks=background_tasks, user=user, model=model, file=file)
 
 
-@router.post("/by_id")
+@router.get("/byId")
 async def create_prediction_from_file(job_id: str,
                                       prediction_service: PredictionService = Depends(get_prediction_service),
-                                      user: User = Depends(security.get_current_user_from_header)) -> PredictionResponse:
-
+                                      _: User = Depends(security.get_current_user_from_header)) -> PredictionResponse:
     return await prediction_service.get_job_status(job_id)
