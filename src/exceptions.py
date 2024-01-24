@@ -89,3 +89,13 @@ class JobNotFoundError(AppException):
         error_message: str = "Job is unknown"
     ):
         super().__init__(status_code, error_key, error_message)
+
+
+class ModelStillProcessingError(AppException):
+    def __init__(
+        self,
+        status_code: int = HTTPStatus.ACCEPTED,
+        error_key: str = "model_still_processing",
+        error_message: str = "Model is still processing the data"
+    ):
+        super().__init__(status_code, error_key, error_message)

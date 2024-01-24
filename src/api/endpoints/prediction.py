@@ -17,7 +17,6 @@ def get_prediction_service():
 
 background_tasks = BackgroundTasks()
 
-
 @router.post("/job_id")
 async def create_prediction_from_file(model: str,
                                       prediction_service: PredictionService = Depends(get_prediction_service),
