@@ -1,5 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, BOOLEAN
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, BOOLEAN, inspect
 from datetime import datetime
 from src.api.dependencies.create_db import Base
 from src.core.config import config
@@ -15,3 +14,6 @@ class Prediction(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
     duration = Column(Integer, nullable=True)
     is_successful = Column(BOOLEAN, nullable=True)
+
+    def to_dict(self):
+        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}

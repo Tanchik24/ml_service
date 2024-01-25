@@ -99,3 +99,23 @@ class ModelStillProcessingError(AppException):
         error_message: str = "Model is still processing the data"
     ):
         super().__init__(status_code, error_key, error_message)
+
+
+class InsufficientFundsError(AppException):
+    def __init__(
+        self,
+        status_code: int = HTTPStatus.PAYMENT_REQUIRED,
+        error_key: str = "insufficient_funds",
+        error_message: str = "Insufficient funds for the transaction"
+    ):
+        super().__init__(status_code, error_key, error_message)
+
+
+class AccessDeniedError(AppException):
+    def __init__(
+        self,
+        status_code: int = HTTPStatus.FORBIDDEN,
+        error_key: str = "access_denied",
+        error_message: str = "Access to the requested resource is denied"
+    ):
+        super().__init__(status_code, error_key, error_message)

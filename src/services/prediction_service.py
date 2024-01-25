@@ -2,7 +2,6 @@ from src.ml.MLModel import MLModel
 import time
 from src.repositories.ModelRepository import model_repository
 from src.repositories.PredictionRepository import prediction_repository
-from fastapi import BackgroundTasks
 from redis import Redis
 from src.ml.preprocess import CSVDataProcessor
 from src.schemas.user import User
@@ -11,11 +10,13 @@ from src.exceptions import ModelNotFoundError, JobNotFoundError, ModelStillProce
 import pandas as pd
 import logging
 from Worker import queue
+from src.services.user_service import user_service
+from src.services.billing_service import billig_service
 
 redis_conn = Redis()
 
 
-def handle_prediction(model_info, data_json, create_time):
+async def handle_prediction(model_info, data_json, create_time, user_id, balance, model_cost):
     model = MLModel()
     data = pd.read_json(data_json)
     start_time = time.time()
@@ -23,30 +24,16 @@ def handle_prediction(model_info, data_json, create_time):
     try:
         prediction = model.get_prediction(model_info['name'], model_info['path'], data)
         total_time = time.time() - start_time
-        return {"model_info": model_info, "results": prediction, "total_time": total_time, "status": 'success', 'create_time': create_time}
+        await prediction_repository.update(create_time, {"is_successful": True, "duration": total_time})
+        await billig_service.update_balance(user_id, balance, model_cost)
+        logging.info(f"Как тебе такое, Маск")
+        return {"model_info": model_info, "results": prediction, "total_time": total_time, "status": 'success',
+                'create_time': create_time}
     except Exception as e:
+        await prediction_repository.update(create_time, {"is_successful": False})
         logging.error(f"Ошибка при выполнении предсказания: {e}")
+        logging.error(f"надо было и дальше учиться на биоинженера")
         return {"model_info": model_info, "error": str(e), "status": 'error', 'create_time': create_time}
-
-
-def check_job_status(job_id):
-    job = queue.fetch_job(job_id)
-    while not job.is_finished and not job.is_failed:
-        time.sleep(1)
-        job.refresh()
-
-    if job.is_failed:
-        error_message = job.meta.get('error', 'Unknown error')
-        logging.error(f"Задача {job_id} завершилась с ошибкой: {error_message}")
-        prediction_repository.update(job.id, {"is_successful": False, "error": error_message})
-        print('надо было и дальше учиться на биоинженера')
-    else:
-        print('Как тебе такое, Маск')
-        duration = job.meta.get('total_time', 0)
-        prediction_repository.update(job.id, {"is_successful": True, "duration": duration})
-        logging.info(f"Задача {job_id} успешно завершена")
-
-    job.save_meta()
 
 
 class PredictionService:
@@ -61,14 +48,15 @@ class PredictionService:
             raise ModelNotFoundError()
         return model_info
 
-    async def predict(self, background_tasks: BackgroundTasks, user: User, model: str, file):
+    async def predict(self, user: User, model: str, file):
+        balance = await user_service.check_balance(user)
         model_info = await self.get_model_from_db(model)
+        billig_service.is_enough_for_model(model_info.cost, balance)
         data = await self.data_preprocessor.process(file)
         data_json = data.to_json()
         model_dict = {'name': model_info.modelname, 'path': model_info.file_path, 'id': model_info.id}
         create_time = time.time()
-        job = queue.enqueue(handle_prediction, model_dict, data_json, create_time)
-        background_tasks.add_task(check_job_status, job.id)
+        job = queue.enqueue(handle_prediction, model_dict, data_json, create_time, user.id, balance, model_info.cost)
         prediction = PredictionInfo(id=job.id,
                                     user_id=user.id,
                                     model_id=model_info.id,
@@ -77,7 +65,7 @@ class PredictionService:
         await prediction_repository.add(prediction.dict())
         return job.id
 
-    async def get_job_status(self, job_id):
+    async def get_job_results(self, job_id):
         job = queue.fetch_job(job_id)
         if not job:
             raise JobNotFoundError()
@@ -98,6 +86,10 @@ class PredictionService:
         )
 
         return response
+
+    async def get_user_predictions(self, user):
+        predictions = await prediction_repository.get_by_user_id(user.id)
+        return predictions
 
 
 prediction_service = PredictionService()

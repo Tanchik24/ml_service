@@ -9,7 +9,7 @@ class UserRepository(Repository):
 
     async def get_by_username(self, username: str):
         async with async_session_maker() as session:
-            statement = select(self.sqlalchemy_model).where(self.sqlalchemy_model.username == username)
+            statement = select(self.sqlalchemy_model).filter_by(username=username)
             result = await session.execute(statement)
             return result.scalar_one_or_none()
 

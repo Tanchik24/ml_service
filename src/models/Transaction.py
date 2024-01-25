@@ -9,6 +9,5 @@ class Transaction(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('Users.id'))
-    transaction_type = Column(String)
     credits = Column(Integer)
     timestamp = Column(DateTime, default=datetime.utcnow)

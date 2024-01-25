@@ -5,3 +5,4 @@ class User(BaseModel):
     id: int
     username: str
     email: str
+    dev: bool

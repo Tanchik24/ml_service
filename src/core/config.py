@@ -5,6 +5,7 @@ class Configs(BaseSettings):
     DATABASE_URL: str
 
     SECRET_KEY: str
+    DEVELOP_KEY: str
     ALGORITHM: str
 
     DATETIME_FORMAT: str = "%Y-%m-%dT%H:%M:%S"

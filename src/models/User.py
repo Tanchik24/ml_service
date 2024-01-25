@@ -1,5 +1,5 @@
 from src.api.dependencies.create_db import Base
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Boolean
 from src.core.config import config
 
 
@@ -11,3 +11,4 @@ class UserDB(Base):
     email = Column(String, unique=False)
     hashed_password = Column(String, unique=False)
     balance = Column(Integer, default=1000)
+    developer = Column(Boolean, nullable=True)
